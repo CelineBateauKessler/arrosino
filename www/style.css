@@ -1,0 +1,118 @@
+body {
+margin: 0px;
+color:white;
+font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+canvas{
+width: 100% !important;
+/*max-width: 800px;*/
+height: auto !important;
+}
+div#chart {
+margin-left: auto;
+margin-right: auto;
+width: 100%;
+text-align: center;
+}
+label {
+
+}
+
+div#chartzone {
+width: 75%;
+background-color: #5bc0de;
+float: left;
+height: 100%;
+}
+
+div#commandzone {
+background-color: 39ACCD;
+width: 25%;
+height: 100%;
+float: left;
+}
+label#title {
+    font-size: 2.80em;
+    font-weight: bold;
+    margin-left: 3%;
+}
+select.form-control {
+display: block;   
+width: 100%;   height: 34px;   
+padding: 6px 12px;  
+font-size: 14px;  
+line-height: 1.42857143; 
+color: #555;   
+background-color: #fff;
+background-image: none;
+border: 1px solid #ccc;
+border-radius: 4px;                     
+}
+
+div#selectArduino {
+    padding-top: 50px;
+    padding-left: 3%;
+    padding-right: 3%;
+}
+
+label#title-form {
+    font-size: 2em;
+}
+
+
+.battery {
+  width: 100px;
+  height: 40px;
+  border: 5px solid #000;
+  margin-top: 25px;
+  margin-left: 3%;
+  float: left;
+  position: relative;
+  background-color: #fff;
+}
+.battery:after {
+  content: '';
+  display: block;
+  width: 10px;
+  height: 20px;
+  background-color: #000;
+  position: absolute;
+  right: -12px;
+  top: 10px;
+}
+
+.battery .level {
+  height: 100%;
+  width: 2%;
+}
+
+.battery .level.high {
+  background-color: #27AE60;  
+}
+.battery .level.med {
+  background-color: #E67E22;  
+}
+.battery .level.low {
+  background-color: #E74C3C;  
+}
+
+div#batteryValue {
+    float: left;
+    margin-top: 9px;
+    margin-left: 20;
+    font-size: 68px;
+    font-weight: bold;
+}
+
+div#selectTime {
+  padding-top: 50px;
+  padding-left: 3%;
+  padding-right: 3%;
+}
+
+div#selectTime-focus {
+  padding-top: 50px;
+  padding-left: 3%;
+  padding-right: 3%;
+}
