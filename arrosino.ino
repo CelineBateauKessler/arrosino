@@ -8,13 +8,15 @@ DHT dht(DHT_PIN, DHT_TYPE);
 /* Grove Moisture Sensor */
 #define MOISTURE_PIN A1
 
+/* Electrovalve */
+#define ELECTROVALVE 13
 /* Communication with Atheros*/
 #include <Bridge.h>
 #include <Process.h>
 
 /* Periodic sensor read */
-const unsigned long MEASURE_PERIOD = 300000; // 5 minutes
-unsigned long lastRun = -MEASURE_PERIOD;//(unsigned long)-60000;
+const unsigned long MEASURE_PERIOD = 600000; // 10 minutes
+unsigned long lastRun = (unsigned long)-600000;//MEASURE_PERIOD;
 
 /* Datation process */ 
 Process date;                 
@@ -25,6 +27,7 @@ void setup()
   Bridge.begin();
   Console.begin(); 
   dht.begin(); 
+  pinMode(ELECTROVALVE, OUTPUT);
 }
  
 void loop()
@@ -72,7 +75,19 @@ void loop()
       Console.println();
     }
     sqlInsertInDb(dateString, temp, humd, moist);
-  }
+
+    // Test whether watering must be activated
+    char water_on_value[1];
+    //String water_on_value;
+    Bridge.get("WATER_ON", water_on_value, 1);
+    Console.print("WATER ON = ");
+    Console.println(water_on_value[0]);
+    if (water_on_value[0] == '1'){
+      digitalWrite(ELECTROVALVE, HIGH);
+    } else {
+      digitalWrite(ELECTROVALVE, LOW);
+    }
+  }// end if period
  } // end loop
 
  // function to run the appending of the data to the database
@@ -84,9 +99,7 @@ void loop()
    String paramstring2 ="/mnt/sda1/arduino/www/SmartWater/smartwater.db ";
    // insert a row with time and sensor data
    String paramstring3 ="'insert into raw_sensor (date, temp, humidity, moisture) Values (\""+dateString+"\", "+String(temp)+","+String(humd)+", "+String(moist)+");'";
-   // get the error code
-   //String paramstring4 =" ; echo $?";
-   Console.println(cmd + paramstring1 + paramstring2 + paramstring3);
+   
    p.runShellCommand(cmd + paramstring1 + paramstring2 + paramstring3);
    // Read process output
    while (p.available()>0) {
