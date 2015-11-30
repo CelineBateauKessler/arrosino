@@ -1,11 +1,8 @@
 <?php
-	$db=new SQLite3("smartwater.db", SQLITE3_OPEN_READONLY);
-	//$db = new PDO('sqlite:smartwater.db');
-	//echo $db->lastErrorMsg();
+	$db=new SQLite3("/mnt/sda1/arduino/www/SmartWater/smartwater.db", SQLITE3_OPEN_READONLY);
 	date_default_timezone_set('UTC');
 	$datestop  = date("Y-m-d H:i:s");
 	$datestart = date("Y-m-d H:i:s", strtotime($datestop." - 7 days"));
-	//$sqlquery = 'SELECT * FROM raw_sensor WHERE date BETWEEN "'.$datestart.'" AND "'.$datestop.'";';
  	$sqlquery = 'SELECT * FROM raw_sensor WHERE date BETWEEN "'.$datestart.'" AND "'.$datestop.'";';
 	//echo $sqlquery;
  	$result = $db->query($sqlquery);

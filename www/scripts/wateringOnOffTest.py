@@ -1,47 +1,56 @@
 #!/usr/bin/python
 import sqlite3
+import sys
 
-conn = sqlite3.connect('../smartwater.db')#TODO path
+conn = sqlite3.connect('/mnt/sda1/arduino/www/SmartWater/smartwater.db')#TODO path
 c = conn.cursor()
 # get settings
-sql_threshold = 'SELECT dry_moisture_threshold, dry_optimal_duration, dry_max_duration FROM settings;'
+sql_threshold = 'SELECT dry_moisture_threshold, wet_moisture_threshold, dry_optimal_duration, dry_max_duration, qpf_threshold FROM settings;'
 c.execute(sql_threshold)
 result = c.fetchone();
-dry_moisture_threshold = result['dry_moisture_threshold']
-dry_optimal_duration = result['dry_optimal_duration']
-dry_max_duration = result['dry_max_duration']
+print(result)
+dry_moisture_threshold = result[0]
+wet_moisture_threshold = result[1]
+dry_optimal_duration = result[2]
+dry_max_duration = result[3]
+qpf_threshold = result[4]
 
 # get moisture measures over the last 10 days
-sqlquery = 'SELECT strftime("%Y-%m-%d", filtered_sensor.date) as avgd, AVG(moisture) as avgm FROM filtered_sensor ORDER BY avgd DESC LIMIT 10;';
+sqlquery = 'SELECT strftime("%Y-%m-%d", filtered_sensor.date) as avgd, MIN(moisture) as avgm FROM filtered_sensor ORDER BY avgd DESC LIMIT '+str(dry_max_duration)+';';
 c.execute(sqlquery)
 rows = c.fetchall()
+# get last precipitation forecast
+sqlquery = 'SELECT qpf FROM current_qpf ORDER BY date DESC LIMIT 1;';
+c.execute(sqlquery)
+qpf = c.fetchone()[0]
+print(qpf)
+
 conn.close()
 
+# Count number of days with dry soil
+# Note that max number of days is dry_max_duration due to above SQL query
 nb_dry_day = 0
-is_first_dry_period = true
-for (row in rows) :
-	if ((row['moisture'] < dry_moisture_threshold) && is_first_dry_period):
-		nb_dry_day ++;
+current_moisture_level = rows[0][1]
+print (current_moisture_level)
+soil_is_dry = (current_moisture_level < dry_moisture_threshold)
+while ((nb_dry_day < rows.count) and soil_is_dry) :
+	if (row[nb_dry_day] < dry_moisture_threshold) :
+		nb_dry_day += 1
 	else :
-		is_first_dry_period = false
+		soil_is_dry = false
+print (nb_dry_day)
 
-
-moisture = row[0]
-if (moisture < 407):
+# Test if watering should start
+waterOn = "0"
+if (nb_dry_day == dry_max_duration):
 	waterOn = "1"
 else:
-	waterOn = "0"
+	if ((nb_dry_day >= dry_optimal_duration) and (qpf_forecast < qpf_threshold)):
+		waterOn = "1"
+print(waterOn)
 
+# Set value for Arduino using Bridge
 sys.path.insert(0, '/usr/lib/python2.7/bridge/')
-
 from bridgeclient import BridgeClient as bridgeclient
-
-value = bridgeclient()
-
-value.put('WATER_ON',waterOn)
-#s=serial.Serial("/dev/ttyATH0",9600,timeout=1)
-#s.write(waterOn)
-#result=s.read(2)
-#s.close()
-
-#print result
+bridge = bridgeclient()
+bridge.put('AUTO_WATER_ON',waterOn)

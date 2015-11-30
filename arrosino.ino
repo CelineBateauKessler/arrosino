@@ -1,4 +1,4 @@
-
+ 
 /* Grove Temperature and Humidity Sensor
 *  --> DHT libray by: http://www.seeedstudio.com */
 #include "DHT.h";
@@ -14,13 +14,19 @@ DHT dht(DHT_PIN, DHT_TYPE);
 #include <Bridge.h>
 #include <Process.h>
 
+/* Watering command */
+bool cmdAutoWaterOn;
+bool cmdManualWaterOn;
+bool cmdManualWaterOff;
+bool autoWateringInProgress;
+unsigned long wateringStartTime;
+unsigned long wateringStepStartTime;
+const unsigned long MANUAL_WATERING_MAX_DURATION = 60*60000; // 1 hour
+const unsigned long WATERING_STEP_DURATION = 10*60000; // 10 min
+
 /* Periodic sensor read */
 const unsigned long MEASURE_PERIOD = 600000; // 10 minutes
 unsigned long lastRun = (unsigned long)-600000;//MEASURE_PERIOD;
-
-/* Datation process */ 
-Process date;                 
-String dateString;
 
 void setup()
 {
@@ -37,23 +43,14 @@ void loop()
   // run again if it's been RUN_INTERVAL_MILLIS milliseconds since we last ran
   if (now - lastRun >= MEASURE_PERIOD) {
     lastRun = now;
-
-    // Get time
-    if (!date.running())  {
-      date.begin("date");
-      date.addParameter("+%Y-%m-%d %H:%M:%S");
-      date.run();
-    }
-    while (date.available()>0) {
-      dateString = date.readString().substring(0,19); 
-    }
     
     // Read sensors
     // Reading temperature or humidity takes about 250 milliseconds!
     // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
     float humd  = dht.readHumidity();
     float temp  = dht.readTemperature();
-    float moist =analogRead(A1);
+    float moist = analogRead(A1);
+    float flow  = 0.0; // TODO replace with true measure
     
     // check if returns are valid, if they are NaN (not a number) then something went wrong!
     if (isnan(temp) || isnan(humd)) {
@@ -74,39 +71,93 @@ void loop()
       Console.print(moist);
       Console.println();
     }
-    sqlInsertInDb(dateString, temp, humd, moist);
+    sqlInsertInDb(temp, humd, moist, flow);
 
-    // Test whether watering must be activated
-    char water_on_value[1];
-    //String water_on_value;
-    Bridge.get("WATER_ON", water_on_value, 1);
-    Console.print("WATER ON = ");
-    Console.println(water_on_value[0]);
-    if (water_on_value[0] == '1'){
+    // water ON / OFF
+    bool waterOn = isWaterOn(now);
+    
+    if (waterOn){
+      flow = 1.0; // TODO remove
       digitalWrite(ELECTROVALVE, HIGH);
     } else {
+      flow = 0.0; // TODO remove
       digitalWrite(ELECTROVALVE, LOW);
     }
   }// end if period
  } // end loop
 
  // function to run the appending of the data to the database
- unsigned int sqlInsertInDb(String dateString, float temp, float humd, float moist){
+ unsigned int sqlInsertInDb(float temp, float humd, float moist, float flow){
    Process p;
-   String cmd = "sqlite3 ";
-   String paramstring1 = "-line ";
-   // set the path and name of the database
-   String paramstring2 ="/mnt/sda1/arduino/www/SmartWater/smartwater.db ";
-   // insert a row with time and sensor data
-   String paramstring3 ="'insert into raw_sensor (date, temp, humidity, moisture) Values (\""+dateString+"\", "+String(temp)+","+String(humd)+", "+String(moist)+");'";
+   String cmd = "python ";
+   String scriptName ="/mnt/sda1/arduino/www/arrosino/scripts/processSensorUpdate.py ";
+   String scriptArgs = String(moist)+" "+String(humd)+" "+String(temp)+" "+String(flow);
    
-   p.runShellCommand(cmd + paramstring1 + paramstring2 + paramstring3);
+   p.runShellCommand(cmd + scriptName + scriptArgs);
+   
    // Read process output
    while (p.available()>0) {
     char c = p.read();
-    Console.print(c);//"There was an error writing to DB " + c);
+    Console.print(c);
   }
   // Ensure the last bit of data is sent.
   Console.flush();
  }
+
+ bool isWaterOn(unsigned long now) {
+    bool wOn = false;
+    
+    char keyValue[1];
+    // read parameter AUTO_WATER_ON from Bridge
+    Bridge.get("AUTO_WATER_ON", keyValue, 1);
+    bool autoWaterOn = (keyValue[0] == '1');
+    // read parameter MANUAL_WATER_ON from Bridge
+    Bridge.get("MANUAL_WATER_ON", keyValue, 1);
+    bool manualWaterOn = (keyValue[0] == '1');
+    // read parameter MANUAL_WATER_ON from Bridge
+    Bridge.get("MANUAL_WATER_OFF", keyValue, 1);
+    bool manualWaterOff = (keyValue[0] == '1');
+
+    // Split watering in 15 minutes long phases
+    if ((autoWaterOn) && (!wateringInProgress)) {
+      wateringInProgress = true;
+      wateringStartTime = now;
+      wateringStepStartTime = now;
+      autoWaterOn = true;
+    } 
+    else {
+      if (wateringInProgress) {
+          if ((now - wateringStepStartTime)> WATERING_STEP_DURATION) {
+            autoWaterOn = !autoWaterOn;
+            wateringStepStartTime = now;            
+          }
+      }
+    }
+    
+    // Override with manual commands
+    if (manualWaterOn) {
+      // Watering forced by user
+      if (!cmdManualWaterOn) {
+        // Watering start
+        cmdManualWaterOn = manualWaterOn;
+        wateringStartTime = now;
+      }
+      else {
+        // Test watering stop
+        if ((now - wateringStartTime) > MANUAL_WATERING_MAX_DURATION) {
+          cmdManualWaterOn = false;
+          keyValue[0] = '1';
+          Bridge.put("MANUAL_WATER_ON", keyValue);
+        }
+      }
+    }
+    else {
+      cmdManualWaterOn = false;
+      if (autoWaterOn) {
+        if (!autoWateringInProgress)
+      }
+    }
+        
+ }
+    
 

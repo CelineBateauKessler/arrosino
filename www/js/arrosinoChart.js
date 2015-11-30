@@ -1,145 +1,128 @@
-var AROSINO_CHART = {};
+var ARROSINO_CHART = {};
 
-AROSINO_CHART.lineMoistureChartData = function(){
-  this.labels = [];
-  this.datasets = [
-    {
-      label: "Moisture dataset",
+// Data
+ARROSINO_CHART.rawSensor = {};
+
+// Charts description
+ARROSINO_CHART.getRawMoisture = function(index) {
+  return ARROSINO_CHART.rawSensor[index].moisture;
+}
+ARROSINO_CHART.getRawHumidity = function(index) {
+  return ARROSINO_CHART.rawSensor[index].humidity;
+}
+ARROSINO_CHART.getRawTemperature = function(index) {
+  return ARROSINO_CHART.rawSensor[index].temp;
+}
+ARROSINO_CHART.chartList = [
+  {name : "raw moisture", getMeasure : ARROSINO_CHART.getRawMoisture, color : "rgba(191,63,63,1)", isOn : false},
+  {name : "raw humidity", getMeasure : ARROSINO_CHART.getRawHumidity, color : "rgba(63,191,63,1)", isOn : false},
+  {name : "raw temperature", getMeasure : ARROSINO_CHART.getRawTemperature, color : "rgba(63,63,191,1)", isOn : false}
+]
+/*
+"raw humidity",
+"raw temperature",
+"filtered moisture",
+"filtered humidity",
+"filtered temperature",
+"precipitation forecast",
+"weather forecast"]*/
+
+
+
+ARROSINO_CHART.displayChoice = function() {
+  $("#container").empty();
+  $("#container").append('<div id="chartList">');
+  ARROSINO_CHART.chartList.forEach(function(element, index) {
+    $("#chartList").append('<div class="input-group">'+
+      '<span class="input-group-addon"><input type="checkbox" name="'+index+'" /></span>'+
+      '<input type="text" class="form-control" value="'+element.name+'"/>'+
+      '</div>');
+  });
+  $("#container").append('<button type="button" id="showChart" class="btn btn-info">SHOW</button>');
+}
+
+ARROSINO_CHART.show = function() {
+  // Add or clean canvas
+  if ($("#canvasChart").length == 0) {
+    $("#container").append('<div id="chart"><canvas id="canvasChart"></canvas></div>');
+  } else {
+    $('#canvasChart').empty();
+  }
+
+  ARROSINO_CHART.ctx = document.getElementById("canvasChart").getContext("2d");
+
+  // get list of selected charts
+  ARROSINO_CHART.selected = [];
+  $('#chartList input:checked').each(function() {
+    ARROSINO_CHART.selected.push(parseInt($(this).attr('name')));
+  });
+
+  // Initialize all datasets
+  ARROSINO_CHART.chartInput = {
+    labels   : [],
+    datasets : []};
+
+  var labels = ARROSINO_CHART.chartInput.labels;
+  for (var i = 0; i < ARROSINO_CHART.rawSensor.length; i++) {
+      labels.push(ARROSINO_CHART.rawSensor[i].date);
+    };
+
+  var nbChart = 0;
+  ARROSINO_CHART.selected.forEach(function(element, index) {
+    var chartDesc = ARROSINO_CHART.chartList[element];
+    ARROSINO_CHART.chartInput.datasets[nbChart] = {
+      label: chartDesc.name,
       fillColor : "rgba(0,0,0,0)",
-      strokeColor : "rgba(191,63,63,1)",
+      strokeColor : chartDesc.color,
       pointColor : "rgba(0,0,0,0)",
       pointStrokeColor : "#fff",
       pointHighlightFill : "#fff",
       pointHighlightStroke : "rgba(0,0,0,0)",
       data : []
     }
-
-  ],
-  this.setData = function(reponse){
-    l = reponse.length;
-    for (var i = 0; i < l; i++) {
-      this.datasets[0].data.push(reponse[i].moisture);
+    var data = ARROSINO_CHART.chartInput.datasets[nbChart].data;
+    for (var i = 0; i < ARROSINO_CHART.rawSensor.length; i++) {
+      data.push(chartDesc.getMeasure(i));
     };
-  },
-  this.setLabels = function(reponse){
-    l = reponse.length;
-    for (var i = 0; i < l; i++) {
-      if ((reponse[i].date.substring(11,2) === "00") || (reponse[i].date.substring(11,2) === "12")) {
-        this.labels.push(reponse[i].date);
-      } else {
-        this.labels.push("");
-      }
-    }
-  }
-}
+    nbChart ++;
+  });
+  //console.log(ARROSINO_CHART.chartInput);
+  ARROSINO_CHART.chart = new Chart(ARROSINO_CHART.ctx).Line(ARROSINO_CHART.chartInput, {pointDot: false, showXLabels: 10});
 
-function lineHumidityChartData(){
-  this.labels = [];
-  this.datasets = [
-    {
-      label: "Humidity dataset",
-      fillColor : "rgba(0,0,0,0)",
-      strokeColor : "rgba(63,191,63,1)",
-      pointColor : "rgba(0,0,0,0)",
-      pointStrokeColor : "#fff",
-      pointHighlightFill : "#fff",
-      pointHighlightStroke : "rgba(0,0,0,0)",
-      data : []
-    }
-
-  ],
-  this.setData = function(reponse){
-    l = reponse.length;
-    for (var i = 0; i < l; i++) {
-      this.datasets[0].data.push(reponse[i].humidity);
-    };
-  },
-  this.setLabels = function(reponse){
-    l = reponse.length;
-    for (var i = 0; i < l; i++) {
-      if (i%12 === 0) {
-        this.labels.push(reponse[i].date);
-      } else {
-        this.labels.push("");
-      }
-    }
-  }
+  // NB : chart.addData doesn't work
+  /*console.log(ARROSINO_CHART.rawSensor.length);
+  //for (var i = 0; i < ARROSINO_CHART.rawSensor.length; i++) {
+  for (var i = 0; i < 200; i++) {
+    var elemData = [];
+    var label    = ARROSINO_CHART.rawSensor[i].date;
+    ARROSINO_CHART.selected.forEach(function(element, index) {
+      elemData.push(ARROSINO_CHART.chartList[element].getMeasure(i));
+    });
+    console.log(elemData);
+    ARROSINO_CHART.chart.addData(elemData, label);
+  }*/
 
 }
 
-function lineTempChartData(){
-  this.labels = [];
-  this.datasets = [
-    {
-      label: "Temperature dataset",
-      fillColor : "rgba(0,0,0,0)",
-      strokeColor : "rgba(63,63,191,1)",
-      pointColor : "rgba(0,0,0,0)",
-      pointStrokeColor : "#fff",
-      pointHighlightFill : "#fff",
-      pointHighlightStroke : "rgba(0,0,0,0)",
-      data : []
-    }
-
-  ],
-  this.setData = function(reponse){
-    l = reponse.length;
-    for (var i = 0; i < l; i++) {
-      this.datasets[0].data.push(reponse[i].temp);
-    };
-  },
-  this.setLabels = function(reponse){
-    l = reponse.length;
-    for (var i = 0; i < l; i++) {
-      if (i%12 === 0) {
-        this.labels.push(reponse[i].date);
-      } else {
-        this.labels.push("");
-      }
-    }
-  }
-
-}
-
-
-function setMoistureChartdata(reponse){
-  $('#myAppContent').empty();
-  $('#myAppContent').add(canvasMoistureChart').empty();
-  var ctx = document.getElementById("canvasMoistureChart").getContext("2d");
-  var HOUR = new lineMoistureChartData();
-
-  HOUR.setData(reponse);
-  HOUR.setLabels(reponse);
-
-  var GraphHour = new Chart(ctx).Line(HOUR, {
-    pointDot: false
+// Events
+$("#container").on('click', "#showChart", function() {
+  // get data
+  $.ajax({
+    url: 'php/getRawSensor.php',
+    type: 'GET'
+  })
+  .done(function(reponse) {
+    console.log(reponse);
+    ARROSINO_CHART.rawSensor = jQuery.parseJSON(reponse);
+    // display chart
+    ARROSINO_CHART.show();
+  })
+  .fail(function() {
+    alert("ERROR while fetching measures");
+  })
+  .always(function() {
+    console.log("DONE");
+    return false;
   });
 
-}
-
-function setHumidityChartdata(reponse){
-  $('#canvasHumidityChart').empty();
-  var ctx = document.getElementById("canvasHumidityChart").getContext("2d");
-  var HOUR = new lineHumidityChartData();
-
-  HOUR.setData(reponse);
-  HOUR.setLabels(reponse);
-
-  var GraphHour = new Chart(ctx).Line(HOUR, {
-    pointDot: false
-  });
-
-}
-function setTempChartdata(reponse){
-  $('#canvasTempChart').empty();
-  var ctx = document.getElementById("canvasTempChart").getContext("2d");
-  var HOUR = new lineTempChartData();
-
-  HOUR.setData(reponse);
-  HOUR.setLabels(reponse);
-
-  var GraphHour = new Chart(ctx).Line(HOUR, {
-    pointDot: false
-  });
-
-}
+});

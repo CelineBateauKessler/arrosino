@@ -5,6 +5,7 @@ $(document).ready(function(){
 	var JsonSettings;
 
 	/* Default display = Activity Display */
+	/**************************************/
 	$.ajax({
 		url: 'php/arrosinoActivity.php',
 		type: 'GET'
@@ -19,6 +20,8 @@ $(document).ready(function(){
 		return false;
 	});
 
+  /* Settings panel */
+	/******************/
 	$("#settings").click(function(){
 		$.ajax({
 			url: 'php/getSettings.php',
@@ -35,6 +38,12 @@ $(document).ready(function(){
 			console.log("DONE");
 			return false;
 		});
+	});
+
+	/* Charts panel */
+	/****************/
+	$("#charts").click(function(){
+		ARROSINO_CHART.displayChoice();
 	});
 
 	$("[name='rawMeasures']").click(function(){

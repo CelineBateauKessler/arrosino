@@ -6,6 +6,7 @@ ARROSINO_SETTINGS.display = function(json){
   ARROSINO_SETTINGS.settings = json;
   console.log(ARROSINO_SETTINGS.settings);
   $("#container").empty();
+  // TODO 2 buttons MANUAL START / MANUAL STOP
   $("#container").append('<ul class="list-group">');
   $.each(json, function(index, element) {
     $('#container').append('<li name="'+index+'" class="list-group-item setting">' + element.name +
