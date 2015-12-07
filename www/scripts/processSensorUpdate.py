@@ -4,7 +4,7 @@ import sys
 import time
 
 # get date and time
-dateString = time.strftime("%Y/%m/%d %H:%M:%S")
+dateString = time.strftime("%Y-%m-%d %H:%M:%S")
 print (dateString)
 
 # connect to database

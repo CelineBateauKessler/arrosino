@@ -1,6 +1,6 @@
  
 /* Grove Temperature and Humidity Sensor
-*  --> DHT libray by: http://www.seeedstudio.com */
+*  --> DHT library by: http://www.seeedstudio.com */
 #include "DHT.h";
 #define DHT_PIN A0     // what pin we're connected to
 #define DHT_TYPE DHT22
@@ -14,16 +14,6 @@ DHT dht(DHT_PIN, DHT_TYPE);
 #include <Bridge.h>
 #include <Process.h>
 
-/* Watering command */
-bool cmdAutoWaterOn;
-bool cmdManualWaterOn;
-bool cmdManualWaterOff;
-bool autoWateringInProgress;
-unsigned long wateringStartTime;
-unsigned long wateringStepStartTime;
-const unsigned long MANUAL_WATERING_MAX_DURATION = 60*60000; // 1 hour
-const unsigned long WATERING_STEP_DURATION = 10*60000; // 10 min
-
 /* Periodic sensor read */
 const unsigned long MEASURE_PERIOD = 600000; // 10 minutes
 unsigned long lastRun = (unsigned long)-600000;//MEASURE_PERIOD;
@@ -34,6 +24,11 @@ void setup()
   Console.begin(); 
   dht.begin(); 
   pinMode(ELECTROVALVE, OUTPUT);
+
+  // Read settings
+  /*WET_MOISTURE_THRESHOLD = atoi(getSetting("wet_moisture_threshold"));
+  WATERING_MAX_DURATION  = atoi(getSetting("watering_max_duration"));
+  WATERING_STEP_DURATION = atoi(getSetting("watering_step_duration"));*/
 }
  
 void loop()
@@ -74,9 +69,13 @@ void loop()
     sqlInsertInDb(temp, humd, moist, flow);
 
     // water ON / OFF
-    bool waterOn = isWaterOn(now);
-    
-    if (waterOn){
+    // Read command from automatic process and manual commands
+    char waterOnValue[1];
+    // read parameter AUTO_WATER_ON from Bridge
+    Bridge.get("WATER_ON", waterOnValue, 1);
+    Console.print("WATER ON = ");
+    Console.println(waterOnValue[0]);
+    if (waterOnValue[0] == '1'){
       flow = 1.0; // TODO remove
       digitalWrite(ELECTROVALVE, HIGH);
     } else {
@@ -102,62 +101,6 @@ void loop()
   }
   // Ensure the last bit of data is sent.
   Console.flush();
- }
-
- bool isWaterOn(unsigned long now) {
-    bool wOn = false;
-    
-    char keyValue[1];
-    // read parameter AUTO_WATER_ON from Bridge
-    Bridge.get("AUTO_WATER_ON", keyValue, 1);
-    bool autoWaterOn = (keyValue[0] == '1');
-    // read parameter MANUAL_WATER_ON from Bridge
-    Bridge.get("MANUAL_WATER_ON", keyValue, 1);
-    bool manualWaterOn = (keyValue[0] == '1');
-    // read parameter MANUAL_WATER_ON from Bridge
-    Bridge.get("MANUAL_WATER_OFF", keyValue, 1);
-    bool manualWaterOff = (keyValue[0] == '1');
-
-    // Split watering in 15 minutes long phases
-    if ((autoWaterOn) && (!wateringInProgress)) {
-      wateringInProgress = true;
-      wateringStartTime = now;
-      wateringStepStartTime = now;
-      autoWaterOn = true;
-    } 
-    else {
-      if (wateringInProgress) {
-          if ((now - wateringStepStartTime)> WATERING_STEP_DURATION) {
-            autoWaterOn = !autoWaterOn;
-            wateringStepStartTime = now;            
-          }
-      }
-    }
-    
-    // Override with manual commands
-    if (manualWaterOn) {
-      // Watering forced by user
-      if (!cmdManualWaterOn) {
-        // Watering start
-        cmdManualWaterOn = manualWaterOn;
-        wateringStartTime = now;
-      }
-      else {
-        // Test watering stop
-        if ((now - wateringStartTime) > MANUAL_WATERING_MAX_DURATION) {
-          cmdManualWaterOn = false;
-          keyValue[0] = '1';
-          Bridge.put("MANUAL_WATER_ON", keyValue);
-        }
-      }
-    }
-    else {
-      cmdManualWaterOn = false;
-      if (autoWaterOn) {
-        if (!autoWateringInProgress)
-      }
-    }
-        
  }
     
 

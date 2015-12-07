@@ -40,3 +40,5 @@ background-color: #5bc0de;
 float: left;
 height: 100%;
 }
+
+.dropdown-menu {position:relative}

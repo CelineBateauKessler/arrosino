@@ -1,11 +1,18 @@
 #!/usr/bin/python
 import sqlite3
 import sys
+import time
 
+# get date and time
+dateString = time.strftime("%Y/%m/%d %H:%M:%S")
+print (dateString)
+
+# connect to database
 conn = sqlite3.connect('/mnt/sda1/arduino/www/SmartWater/smartwater.db')#TODO path
 c = conn.cursor()
+
 # get settings
-sql_threshold = 'SELECT dry_moisture_threshold, wet_moisture_threshold, dry_optimal_duration, dry_max_duration, qpf_threshold FROM settings;'
+sql_threshold = 'SELECT value FROM settings WHERE name="";'
 c.execute(sql_threshold)
 result = c.fetchone();
 print(result)

@@ -105,6 +105,10 @@ ARROSINO_CHART.show = function() {
 }
 
 // Events
+$(document).ready(function() {
+  ARROSINO_CHART.displayChoice();
+});
+
 $("#container").on('click', "#showChart", function() {
   // get data
   $.ajax({
@@ -124,5 +128,4 @@ $("#container").on('click', "#showChart", function() {
     console.log("DONE");
     return false;
   });
-
 });

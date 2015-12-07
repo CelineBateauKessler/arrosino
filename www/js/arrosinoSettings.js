@@ -6,58 +6,73 @@ ARROSINO_SETTINGS.display = function(json){
   ARROSINO_SETTINGS.settings = json;
   console.log(ARROSINO_SETTINGS.settings);
   $("#container").empty();
-  // TODO 2 buttons MANUAL START / MANUAL STOP
-  $("#container").append('<ul class="list-group">');
+  // Table with all settings
+  $("#container").append('<table id="settingsTable" class="table">');
+  $("#settingsTable").append('<thead><tr><th class="hideMobile">Name</th>'+
+                    '<th class="hideMobile">Value</th>'+
+                    '<th class="hideMobile">Min</th>'+
+                    '<th class="hideMobile">Max</th>'+
+                    '</tr></thead>');
+  $("#settingsTable").append('<tbody id="settingsBody">');
+
   $.each(json, function(index, element) {
-    $('#container').append('<li name="'+index+'" class="list-group-item setting">' + element.name +
-     '<span class="badge">' + element.value + '</span></li>');
+    $('#settingsBody').append('<tr name="'+element.name+'"><td>'+element.description+'</td>'+
+                    '<td><input type="text" class="form-control" value='+element.value+'></td>'+
+                    '<td>'+element.min+'</td>'+
+                    '<td>'+element.max+'</td>'+
+                    '</tr>');
     });
-  $("#container").append('</ul>');
+  // Save or restore
+  $("#container").append('<div id="buttons" class="btn-toolbar" role="toolbar">');
+
+  $("#buttons").append('<button id="saveSetting" class="btn" type="button">Save</button>');
+
+  $("#buttons").append('<button id="restoreSetting" class="btn dropdown-toggle" data-toggle="dropdown" type="button" aria-haspopup="true" aria-expanded="false">Restore '+
+  '<span class="caret"></span><span class="sr-only">Toggle Dropdown</span></button>');
+  $("#buttons").append('<ul id="preSetsList" class="dropdown-menu">');
+  $("#preSetsList").append('<li><a href="#">Default</a></li>');
+  $("#preSetsList").append('<li><a href="#">Aromatics</a></li>');
+  $("#preSetsList").append('<li><a href="#">Mediterranean garden</a></li>');
+  $("#preSetsList").append('<li><a href="#">Golf</a></li>');
+  $("#preSetsList").append('<li><a href="#">Cactus</a></li>');
+
+  $("#buttons").append('<button id="cancel" class="btn" type="button">Cancel</button>');
 }
 
-$('body').on('click', '.setting', function() {
-  console.log("***change setting***");
-  console.log(ARROSINO_SETTINGS.settings);
-  // If there is already an input area for another setting :
-  // remove it and revert to badge with previous value
-  var input = $('#container').find($('#newSetting'));
-  if (input.length > 0) {
-    console.log("modif in progress for " + input.attr('name'))
-    input.parent().append('<span class="badge">' + ARROSINO_SETTINGS.settings[parseInt(input.attr('name'))].value + '</span></li>');
-    input.remove();
-  }
-  // Remove the badge and replace by an input area
-  var badge = $(this).find($('span'));
-  if (badge) {
-    badge.remove();
-    $(this).append('<div id="newSetting" class="input-group" name="'+ $(this).attr('name')+'">'+
-                    '<input type="text" class="form-control" placeholder="Enter new value">'+
-                    '<span class="input-group-btn">'+
-                    '<button id="saveSetting" class="btn" type="button">Save</button>'+
-                    '</span></div>');
-  }
-});
-
 $('body').on('click', '#saveSetting', function() {
-  var input = $('#container').find($('#newSetting'));
-  if (input.length > 0) {
-    // Check value
-    var intValue = input.val();
-    if (isNaN(intValue))
-    {
-      input.val("A number is expected");
+  console.log(ARROSINO_SETTINGS.settings);
+  // Check all inputs
+  var isOK = true;
+  $('#settingsBody').find('tr').each(function(index, element) {
+    $(this).removeClass("alert alert-danger");
+    newValue = $(this).find('input').val();
+    if (isNaN(newValue)) {
+      $(this).find('input').val("Numeric value is expected");
+      $(this).addClass("alert alert-danger");
+      isOK = false;
     }
-    else
-    {
-      // Update local data
-      ARROSINO_SETTINGS.settings[parseInt(input.attr('name'))].value = intValue;
-      input.parent().append('<span class="badge">' + intValue + '</span></li>');
-      input.remove();
-      // Update remote database
-      $.ajax({
-        url: 'postSettings.php',
-        type: 'POST',
-        data: ARROSINO_SETTINGS.settings
+    else {
+      // tr index = json index
+      if ((newValue > ARROSINO_SETTINGS.settings[index].max) || (newValue < ARROSINO_SETTINGS.settings[index].min)) {
+        $(this).find('input').val("Value outside bounds");
+        $(this).addClass("alert alert-danger");
+        isOK = false;
+      }
+    }
+
+  });
+
+  if (isOK) {
+    // Update local data
+    $('#settingsBody').find('tr').each(function(index, element) {
+      ARROSINO_SETTINGS.settings[index].value = $(this).find('input').val();
+    });
+    console.log(ARROSINO_SETTINGS.settings);
+    // Update remote database
+    $.ajax({
+      url: 'php/postSettings.php',
+      type: 'POST',
+      data: {settings : ARROSINO_SETTINGS.settings}
       })
       .done(function(reponse) {
         console.log("SAVED");  })
@@ -69,5 +84,22 @@ $('body').on('click', '#saveSetting', function() {
         return false;
       });
     }
-  }
+});
+
+$(document).ready(function() {
+  $.ajax({
+    url: 'php/getSettings.php',
+    type: 'GET'
+  })
+  .done(function(reponse) {
+    JsonSettings = jQuery.parseJSON(reponse);
+    $("#container").html(ARROSINO_SETTINGS.display(JsonSettings));
+  })
+  .fail(function() {
+    console.log("ERROR");
+  })
+  .always(function() {
+    console.log("DONE");
+    return false;
+  });
 });
