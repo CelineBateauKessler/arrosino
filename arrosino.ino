@@ -10,6 +10,14 @@ DHT dht(DHT_PIN, DHT_TYPE);
 
 /* Electrovalve */
 #define ELECTROVALVE 13
+
+/* Variables */
+float humd  = 0.0;
+float temp  = 0.0;
+float moist = 0.0;
+float flow  = 0.0; 
+bool waterIsOn = 0;
+
 /* Communication with Atheros*/
 #include <Bridge.h>
 #include <Process.h>
@@ -24,11 +32,6 @@ void setup()
   Console.begin(); 
   dht.begin(); 
   pinMode(ELECTROVALVE, OUTPUT);
-
-  // Read settings
-  /*WET_MOISTURE_THRESHOLD = atoi(getSetting("wet_moisture_threshold"));
-  WATERING_MAX_DURATION  = atoi(getSetting("watering_max_duration"));
-  WATERING_STEP_DURATION = atoi(getSetting("watering_step_duration"));*/
 }
  
 void loop()
@@ -42,10 +45,10 @@ void loop()
     // Read sensors
     // Reading temperature or humidity takes about 250 milliseconds!
     // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-    float humd  = dht.readHumidity();
-    float temp  = dht.readTemperature();
-    float moist = analogRead(A1);
-    float flow  = 0.0; // TODO replace with true measure
+    humd  = dht.readHumidity();
+    temp  = dht.readTemperature();
+    moist = analogRead(A1);
+    flow  = 0.0; // TODO replace with true measure
     
     // check if returns are valid, if they are NaN (not a number) then something went wrong!
     if (isnan(temp) || isnan(humd)) {
@@ -67,23 +70,27 @@ void loop()
       Console.println();
     }
     sqlInsertMeasuresInDb(temp, humd, moist, flow);
-
-    // water ON / OFF
-    // Read command from automatic process and manual commands
-    char waterOnValue[1];
-    // read parameter AUTO_WATER_ON from Bridge
-    Bridge.get("WATER_ON", waterOnValue, 1);
-    Console.print("WATER ON = ");
-    Console.println(waterOnValue[0]);
-    if (waterOnValue[0] == '1'){
-      flow = 100.0; // TODO remove
-      digitalWrite(ELECTROVALVE, HIGH);
-    } else {
-      flow = 0.0; // TODO remove
-      digitalWrite(ELECTROVALVE, LOW);
-    }
     sqlUpdateWaterStatusInDb(flow);
-  }// end if period
+  }
+  // water ON / OFF
+  // Read command from automatic process and manual commands
+  char waterOnValue[1];
+  // read parameter AUTO_WATER_ON from Bridge
+  Bridge.get("WATER_ON", waterOnValue, 1);
+  //Console.print("WATER ON = ");
+  //Console.println(waterOnValue[0]);
+  if (waterOnValue[0] == '1'){
+    flow = 100.0; // TODO remove
+    digitalWrite(ELECTROVALVE, HIGH);
+    if (waterIsOn == 0) {
+      sqlUpdateWaterStatusInDb(100.0);// leave default value, not used, just for session timestamp
+    }
+  } else {
+    flow = 0.0; // TODO remove
+    digitalWrite(ELECTROVALVE, LOW);
+  }
+  waterIsOn = int(waterOnValue[0]);
+  // end if period
  } // end loop
 
  // Store sensor measures in database
