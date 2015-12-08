@@ -82,6 +82,7 @@ void loop()
       flow = 0.0; // TODO remove
       digitalWrite(ELECTROVALVE, LOW);
     }
+    sqlUpdateWaterStatusInDb(flow);
   }// end if period
  } // end loop
 
@@ -104,11 +105,11 @@ void loop()
  }
 
  // Store waterin status database
- unsigned int sqlInsertMeasuresInDb(float temp, float humd, float moist, float flow){
+ unsigned int sqlUpdateWaterStatusInDb(float flow){
    Process p;
    String cmd = "python ";
-   String scriptName ="/mnt/sda1/arduino/www/arrosino/scripts/processSensorUpdate.py ";
-   String scriptArgs = String(moist)+" "+String(humd)+" "+String(temp)+" "+String(flow);
+   String scriptName ="/mnt/sda1/arduino/www/arrosino/scripts/processWateringStatusUpdate.py ";
+   String scriptArgs = String(flow);
    
    p.runShellCommand(cmd + scriptName + scriptArgs);
    
