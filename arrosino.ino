@@ -66,7 +66,7 @@ void loop()
       Console.print(moist);
       Console.println();
     }
-    sqlInsertInDb(temp, humd, moist, flow);
+    sqlInsertMeasuresInDb(temp, humd, moist, flow);
 
     // water ON / OFF
     // Read command from automatic process and manual commands
@@ -76,7 +76,7 @@ void loop()
     Console.print("WATER ON = ");
     Console.println(waterOnValue[0]);
     if (waterOnValue[0] == '1'){
-      flow = 1.0; // TODO remove
+      flow = 100.0; // TODO remove
       digitalWrite(ELECTROVALVE, HIGH);
     } else {
       flow = 0.0; // TODO remove
@@ -85,8 +85,26 @@ void loop()
   }// end if period
  } // end loop
 
- // function to run the appending of the data to the database
- unsigned int sqlInsertInDb(float temp, float humd, float moist, float flow){
+ // Store sensor measures in database
+ unsigned int sqlInsertMeasuresInDb(float temp, float humd, float moist, float flow){
+   Process p;
+   String cmd = "python ";
+   String scriptName ="/mnt/sda1/arduino/www/arrosino/scripts/processSensorUpdate.py ";
+   String scriptArgs = String(moist)+" "+String(humd)+" "+String(temp)+" "+String(flow);
+   
+   p.runShellCommand(cmd + scriptName + scriptArgs);
+   
+   // Read process output
+   while (p.available()>0) {
+    char c = p.read();
+    Console.print(c);
+  }
+  // Ensure the last bit of data is sent.
+  Console.flush();
+ }
+
+ // Store waterin status database
+ unsigned int sqlInsertMeasuresInDb(float temp, float humd, float moist, float flow){
    Process p;
    String cmd = "python ";
    String scriptName ="/mnt/sda1/arduino/www/arrosino/scripts/processSensorUpdate.py ";

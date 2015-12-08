@@ -3,8 +3,8 @@ CREATE TABLE RAW_SENSOR (date DATETIME, temp FLOAT, humidity FLOAT, moisture FLO
 CREATE TABLE FILTERED_SENSOR (date DATETIME, temp FLOAT, humidity FLOAT, moisture FLOAT);
 CREATE TABLE AVG_SENSOR (date DATETIME, temp FLOAT, humidity FLOAT, moisture FLOAT);
 CREATE TABLE CURRENT_QPF (date DATETIME, qpf INT, icon_url STRING);
-CREATE TABLE AVG_QPF (date DATETIME, qpf INT);
-CREATE TABLE LOCATION (city VARCHAR(50), latitude FLOAT, longitude FLOAT);
+CREATE TABLE USER (password VARCHAR(50), city VARCHAR(50), latitude FLOAT, longitude FLOAT);
+insert into user (password) values ("arduino");
 CREATE TABLE WATERING_SESSION (date DATETIME, duration INT, volume FLOAT);
 CREATE TABLE SETTINGS (name VARCHAR(30), description TEXT, value INT, min INT, max INT);
 insert into settings (name, description, value, min, max) values ("WET_SOIL_MOISTURE_THRESHOLD", "Moisture threshold for wet soil (%)", 50, 0, 100);

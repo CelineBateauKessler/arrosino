@@ -37,14 +37,16 @@ if (result == None ):
 	fmoisture = float(moisture)
 	fhumidity = float(humidity)
 	ftemp = float(temp)
+	fflow = float(flow)
 else:
 	#result[0] : date
 	fmoisture = compratio*float(result[3]) + ratio*float(moisture)
 	fhumidity = compratio*float(result[2]) + ratio*float(humidity)
 	ftemp     = compratio*float(result[1]) + ratio*float(temp)
+	fflow     = compratio*float(result[4]) + ratio*float(flow)
 
 # store filtered data in filtered_sensor table
-sqlquery = 'INSERT INTO filtered_sensor (date, temp, humidity, moisture) VALUES (\"'+dateString+'\",'+str(ftemp)+','+str(fhumidity)+','+str(fmoisture)+');'
+sqlquery = 'INSERT INTO filtered_sensor (date, temp, humidity, , flow) VALUES (\"'+dateString+'\",'+str(ftemp)+','+str(fhumidity)+','+str(fmoisture)+','+str(fflow)+');'
 print (sqlquery)
 c.execute(sqlquery)
 conn.commit()
