@@ -14,9 +14,23 @@ body {
   padding-top: 70px;
 }
 
-#navbar a {color: #B2DFDB;}
-#navbar a:hover {background-color: #00796B;}
-#navbar a:focus {background-color: #00796B;}
+.navbar {
+  background-image: url("Leaf2.jpg");
+  background-repeat: repeat-x;
+  background-color: #009688;
+  color: #FFFFFF;
+}
+.navbar-default .navbar-brand {
+  color: #FFFFFF;
+}
+
+.navbar-toggle .icon-bar {
+  background-color: #FFFFFF;
+}
+
+#navbar a {color: #B2DFDB;font-weight: bold;}
+#navbar a:hover {background-color: rgba(0,0,0,0.4);}
+#navbar a:focus {background-color: rgba(0,0,0,0.4);}
 .dropdown a {color: #727272;}
 button {
   background-color: #8BC34A;

@@ -1,11 +1,10 @@
 $("#enterPassword").click(function(){
   var password = $('#password');
-  password.removeClass("alert alert-danger");
-  console.log(password.val());
+  password.removeClass("alert-danger");
 
   if (password.val() == ''){
     password.focus() ;
-    password.addClass("alert alert-danger");
+    password.addClass("alert-danger");
   }
   else
   {
@@ -16,7 +15,14 @@ $("#enterPassword").click(function(){
         })
         .done(function(reponse) {
           console.log(reponse);
-          //window.location = '/sd/arrosino/index.php';
+          if (reponse === 'CONNECTED') {
+            window.location = 'index.php';
+          }
+          else {
+            password.prev().html('Try again');
+            password.addClass("alert-danger");
+            password.val('');
+          }
       	})
       	.fail(function() {
       		console.log("error");
