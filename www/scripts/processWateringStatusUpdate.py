@@ -36,7 +36,7 @@ delay = (dateNow - dateLast).seconds
 print delay
 
 if (flow > 0.0): # TODO adjust threshold to avoid false water flow detection
-	if (delay<500*60): # TODO replace with Max_step_duration value
+	if (delay<50*60): # TODO replace with Max_step_duration value
 		# update duration and volume
 		dateLastString = datetime.strftime(dateLast, "%Y-%m-%d %H:%M:%S")
 		duration = durationLast + delay

@@ -13,5 +13,5 @@ insert into settings (name, description, value, min, max) values ("DRY_SOIL_OPTI
 insert into settings (name, description, value, min, max) values ("DRY_SOIL_MAX_DURATION", "Max duration with dry soil (days)", 4, 0, 30);
 insert into settings (name, description, value, min, max) values ("PRECIPITATION_THRESHOLD", "Precipitation threshold (mm)", 50, 0, 500);
 insert into settings (name, description, value, min, max) values ("WATERING_MAX_DURATION", "Maximum watering duration (minutes)", 180, 0, 500);
-insert into settings (name, description, value, min, max) values ("WATERING_STEP_DURATION", "Watering step duration (minutes)", 15, 0, 500);
+insert into settings (name, description, value, min, max) values ("WATERING_STEP_DURATION", "Watering step duration (minutes)", 15, 0, 50);
 SQL_ENTRY_TAG

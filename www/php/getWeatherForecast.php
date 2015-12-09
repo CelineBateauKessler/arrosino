@@ -3,7 +3,8 @@
 	date_default_timezone_set('UTC');
 	$datestop  = date("Y-m-d H:i:s");
 	$datestart = date("Y-m-d H:i:s", strtotime($datestop." - 7 days"));
- 	$sqlquery = 'SELECT * FROM raw_sensor WHERE date BETWEEN "'.$datestart.'" AND "'.$datestop.'";';
+	//CREATE TABLE CURRENT_QPF (date DATETIME, qpf INT, icon_url STRING);
+ 	$sqlquery = 'SELECT * FROM current_qpf WHERE date BETWEEN "'.$datestart.'" AND "'.$datestop.'";';
 	//echo $sqlquery;
  	$result = $db->query($sqlquery);
 	//echo $db->lastErrorMsg();
@@ -15,11 +16,8 @@
 		} else {
 			$firstrow = false;
 		}
-		echo '{"date":"'.$row["date"].'","humidity":'.$row["humidity"].',"moisture":'.$row["moisture"].',"temp":'.$row["temp"].',"flow":'.$row["flow"].'}';
-//		array_push($table, $row);
+		echo '{"date":"'.$row["date"].'","qpf":'.$row["qpf"].',"icon_url":"'.$row["icon_url"].'"}';
 	}
 	echo ']';
 	$db->close();
-
-	//echo json_encode($result);
 ?>

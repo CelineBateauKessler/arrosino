@@ -1,4 +1,4 @@
-$("#enterPassword").click(function(){
+function processPassword() {
   var password = $('#password');
   password.removeClass("alert-danger");
 
@@ -31,4 +31,15 @@ $("#enterPassword").click(function(){
       		return false;
       	});
   }
+}
+
+$("#enterPassword").click(function(){
+  processPassword();
+})
+
+$("body").on('keyup', "#password", function(key){
+	var theKey = key.which || key.keyCode; // le code est compatible tous navigateurs grâce à ces deux propriétés
+	if(theKey == 13){
+		processPassword();
+	}
 })

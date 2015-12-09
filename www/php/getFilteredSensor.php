@@ -3,7 +3,7 @@
 	date_default_timezone_set('UTC');
 	$datestop  = date("Y-m-d H:i:s");
 	$datestart = date("Y-m-d H:i:s", strtotime($datestop." - 7 days"));
- 	$sqlquery = 'SELECT * FROM raw_sensor WHERE date BETWEEN "'.$datestart.'" AND "'.$datestop.'";';
+ 	$sqlquery = 'SELECT * FROM filtered_sensor WHERE date BETWEEN "'.$datestart.'" AND "'.$datestop.'";';
 	//echo $sqlquery;
  	$result = $db->query($sqlquery);
 	//echo $db->lastErrorMsg();

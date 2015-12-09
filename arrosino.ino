@@ -47,8 +47,8 @@ void loop()
     // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
     humd  = dht.readHumidity();
     temp  = dht.readTemperature();
-    moist = analogRead(A1);
-    flow  = 0.0; // TODO replace with true measure
+    moist = analogRead(A1)/10.0; // to get a value between 0 and 100
+    //flow  = TODO update with true measure
     
     // check if returns are valid, if they are NaN (not a number) then something went wrong!
     if (isnan(temp) || isnan(humd)) {

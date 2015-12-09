@@ -6,17 +6,19 @@ ARROSINO_ACTIVITY.display = function(){
   console.log(ARROSINO_ACTIVITY.activity);
   $("#container").empty();
 
+  // Buttons to force manual ON/OFF
+  $("#container").append('<div id="OnOffButtons" class="btn-toolbar" role="toolbar">');
+
+  $("#OnOffButtons").append('<button id="waterOn" class="btn" type="button">MANUAL ON</button>');
+  $("#OnOffButtons").append('<button id="waterOff" class="btn" type="button">MANUAL OFF</button>');
+
   $.each(ARROSINO_ACTIVITY.activity, function(index, element) {
     $('#container').append('<h2>'+element.date.slice(0,16)+'<h2>');
     $('#container').append('<p><span class="glyphicon glyphicon-time"></span>  '+element.duration+' minutes<p>');
     $('#container').append('<p><span class="glyphicon glyphicon-tint"></span>  '+element.volume+' litres<p>');
     $('#container').append('<hr>');
     });
-  // Buttons to force manual ON/OFF
-  $("#container").append('<div id="OnOffButtons" class="btn-toolbar" role="toolbar">');
 
-  $("#OnOffButtons").append('<button id="waterOn" class="btn" type="button">FORCE ON</button>');
-  $("#OnOffButtons").append('<button id="waterOff" class="btn" type="button">FORCE OFF</button>');
 }
 
 $("body").on('click', "#waterOn", function() {

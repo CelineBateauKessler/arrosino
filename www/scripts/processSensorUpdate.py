@@ -13,10 +13,10 @@ c = conn.cursor()
 
 # read arguments
 # NB : argv[0] = script name
-moisture = sys.argv[1]
-humidity = sys.argv[2]
-temp = sys.argv[3]
-flow = sys.argv[4]
+moisture = float(sys.argv[1])
+humidity = float(sys.argv[2])
+temp     = float(sys.argv[3])
+flow     = float(sys.argv[4])
 
 # store raw data in raw_sensor table
 sqlquery = 'INSERT INTO raw_sensor (date, temp, humidity, moisture, flow) VALUES (\"'+dateString+'\",'+str(temp)+','+str(humidity)+','+str(moisture)+','+str(flow)+');'
@@ -25,13 +25,18 @@ c.execute(sqlquery)
 conn.commit()
 
 # compute filtered data
-ratio = 0.1
-compratio = (1.0 - ratio)
+if (flow > 0.0):
+	ratioM = 0.1
+else:
+	ratioM = 0.5
+ratioTH = 0.5
+ratioF  = 1.0 # flow is not be filtered
 
 sqlquery = 'SELECT * FROM filtered_sensor ORDER BY date DESC LIMIT 1;'
 print (sqlquery)
 c.execute(sqlquery)
 result = c.fetchone()
+print (result)
 
 if (result == None ):
 	fmoisture = float(moisture)
@@ -40,13 +45,13 @@ if (result == None ):
 	fflow = float(flow)
 else:
 	#result[0] : date
-	fmoisture = compratio*float(result[3]) + ratio*float(moisture)
-	fhumidity = compratio*float(result[2]) + ratio*float(humidity)
-	ftemp     = compratio*float(result[1]) + ratio*float(temp)
-	fflow     = compratio*float(result[4]) + ratio*float(flow)
+	fmoisture = (1.0 - ratioM)*float(result[3])  + ratioM*float(moisture)
+	fhumidity = (1.0 - ratioTH)*float(result[2]) + ratioTH*float(humidity)
+	ftemp     = (1.0 - ratioTH)*float(result[1]) + ratioTH*float(temp)
+	fflow     = (1.0 - ratioF)*float(result[4])  + ratioF*float(flow)
 
 # store filtered data in filtered_sensor table
-sqlquery = 'INSERT INTO filtered_sensor (date, temp, humidity, , flow) VALUES (\"'+dateString+'\",'+str(ftemp)+','+str(fhumidity)+','+str(fmoisture)+','+str(fflow)+');'
+sqlquery = 'INSERT INTO filtered_sensor (date, temp, humidity, moisture, flow) VALUES (\"'+dateString+'\",'+str(ftemp)+','+str(fhumidity)+','+str(fmoisture)+','+str(fflow)+');'
 print (sqlquery)
 c.execute(sqlquery)
 conn.commit()
