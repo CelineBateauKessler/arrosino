@@ -16,7 +16,8 @@ float humd  = 0.0;
 float temp  = 0.0;
 float moist = 0.0;
 float flow  = 0.0; 
-bool waterIsOn = 0;
+bool waterIsOn = false;
+bool waterWasOn = false;
 
 /* Communication with Atheros*/
 #include <Bridge.h>
@@ -77,19 +78,18 @@ void loop()
   char waterOnValue[1];
   // read parameter AUTO_WATER_ON from Bridge
   Bridge.get("WATER_ON", waterOnValue, 1);
-  //Console.print("WATER ON = ");
-  //Console.println(waterOnValue[0]);
-  if (waterOnValue[0] == '1'){
+  waterIsOn = (waterOnValue[0] == '1');
+  if (waterIsOn){
     flow = 100.0; // TODO remove
     digitalWrite(ELECTROVALVE, HIGH);
-    if (waterIsOn == 0) {
-      sqlUpdateWaterStatusInDb(100.0);// leave default value, not used, just for session timestamp
-    }
   } else {
     flow = 0.0; // TODO remove
     digitalWrite(ELECTROVALVE, LOW);
   }
-  waterIsOn = int(waterOnValue[0]);
+  if (waterIsOn != waterWasOn) {
+      sqlUpdateWaterStatusInDb(100.0); // Default flow value only used for watering session time stamp
+  }
+  waterWasOn = waterIsOn;
   // end if period
  } // end loop
 
@@ -111,7 +111,7 @@ void loop()
   Console.flush();
  }
 
- // Store waterin status database
+ // Store watering status in database
  unsigned int sqlUpdateWaterStatusInDb(float flow){
    Process p;
    String cmd = "python ";

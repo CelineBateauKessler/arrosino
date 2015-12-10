@@ -13,8 +13,9 @@ ARROSINO_ACTIVITY.display = function(){
   $("#OnOffButtons").append('<button id="waterOff" class="btn" type="button">MANUAL OFF</button>');
 
   $.each(ARROSINO_ACTIVITY.activity, function(index, element) {
+    durationMinutes = Math.floor(parseInt(element.duration)/60);
     $('#container').append('<h2>'+element.date.slice(0,16)+'<h2>');
-    $('#container').append('<p><span class="glyphicon glyphicon-time"></span>  '+element.duration+' minutes<p>');
+    $('#container').append('<p><span class="glyphicon glyphicon-time"></span>  '+durationMinutes+' minutes<p>');
     $('#container').append('<p><span class="glyphicon glyphicon-tint"></span>  '+element.volume+' litres<p>');
     $('#container').append('<hr>');
     });
