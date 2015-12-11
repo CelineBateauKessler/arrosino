@@ -24,7 +24,21 @@ ARROSINO_ACTIVITY.display = function(){
 
 $("body").on('click', "#waterOn", function() {
   $.ajax({
-    url: '../../data/put/WATER_ON/1', // use Yun REST API
+    url: '../../data/put/MANUAL_WATER_ON/1', // use Yun REST API
+    type: 'POST'
+  })
+  .done(function(reponse) {
+    console.log(reponse);
+  })
+  .fail(function() {
+    console.log("ERROR");
+  })
+  .always(function() {
+    console.log("DONE");
+    return false;
+  });
+  $.ajax({
+    url: '../../data/put/MANUAL_WATER_OFF/0', // use Yun REST API
     type: 'POST'
   })
   .done(function(reponse) {
@@ -41,7 +55,21 @@ $("body").on('click', "#waterOn", function() {
 
 $("body").on('click', '#waterOff', function() {
   $.ajax({
-    url: '../../data/put/WATER_ON/0', // use Yun REST API
+    url: '../../data/put/MANUAL_WATER_ON/0', // use Yun REST API
+    type: 'POST'
+  })
+  .done(function(reponse) {
+    console.log(reponse);
+  })
+  .fail(function() {
+    console.log("ERROR");
+  })
+  .always(function() {
+    console.log("DONE");
+    return false;
+  });
+  $.ajax({
+    url: '../../data/put/MANUAL_WATER_OFF/1', // use Yun REST API
     type: 'POST'
   })
   .done(function(reponse) {

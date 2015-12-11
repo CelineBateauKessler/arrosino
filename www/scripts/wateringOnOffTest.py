@@ -1,60 +1,116 @@
 #!/usr/bin/python
-import sqlite3
 import sys
-import time
-
-# get date and time
-dateString = time.strftime("%Y/%m/%d %H:%M:%S")
-print (dateString)
+import sqlite3
 
 # connect to database
 conn = sqlite3.connect('/mnt/sda1/arduino/www/SmartWater/smartwater.db')#TODO path
 c = conn.cursor()
 
 # get settings
-sql_threshold = 'SELECT value FROM settings WHERE name="";'
-c.execute(sql_threshold)
-result = c.fetchone();
+sqlSettings = 'SELECT value FROM settings;'
+c.execute(sqlSettings)
+result = c.fetchall()
+print("*** settings ")
 print(result)
-dry_moisture_threshold = result[0]
-wet_moisture_threshold = result[1]
-dry_optimal_duration = result[2]
-dry_max_duration = result[3]
-qpf_threshold = result[4]
+HUMIDITY_WET_THRESHOLD = result[0][0]
+HUMIDITY_DRY_THRESHOLD = result[1][0]
+NB_OPT_DRY_PERIOD      = result[2][0] * 1440
+NB_MAX_DRY_PERIOD      = result[3][0] * 1440
+QPF_THRESHOLD          = result[4][0]
+MAX_WATERING_DURATION  = result[5][0]
+WATERING_STEP_DURATION = result[6][0]
+PERIOD                 = 10 #minutes
 
-# get moisture measures over the last 10 days
-sqlquery = 'SELECT strftime("%Y-%m-%d", filtered_sensor.date) as avgd, MIN(moisture) as avgm FROM filtered_sensor ORDER BY avgd DESC LIMIT '+str(dry_max_duration)+';';
-c.execute(sqlquery)
-rows = c.fetchall()
+# get state variables
+sqlState = 'SELECT * FROM water_control;'
+c.execute(sqlState)
+result = c.fetchone()
+state                = result[0]
+nbDryPeriod          = result[1]
+wateringDuration     = result[2]
+wateringStepDuration = result[3]
+print("*** state / dry period / watering duration / watering step duartion")
+print(state)
+print(nbDryPeriod)
+print(wateringDuration)
+print(wateringStepDuration)
+
+# get last moisture measure
+sqlMeasures = "SELECT moisture from filtered_sensor order by date DESC LIMIT 1;"
+c.execute(sqlMeasures)
+result = c.fetchone()
+moisture = result[0]
+print("*** moisture")
+print(result)
+print(moisture)
 # get last precipitation forecast
-sqlquery = 'SELECT qpf FROM current_qpf ORDER BY date DESC LIMIT 1;';
-c.execute(sqlquery)
-qpf = c.fetchone()[0]
+sqlMeasures = "SELECT qpf from current_qpf order by date DESC LIMIT 1;"
+c.execute(sqlMeasures)
+result = c.fetchone()
+qpf = result[0]
+print("*** QPF")
+print(result)
 print(qpf)
-
 conn.close()
 
-# Count number of days with dry soil
-# Note that max number of days is dry_max_duration due to above SQL query
-nb_dry_day = 0
-current_moisture_level = rows[0][1]
-print (current_moisture_level)
-soil_is_dry = (current_moisture_level < dry_moisture_threshold)
-while ((nb_dry_day < rows.count) and soil_is_dry) :
-	if (row[nb_dry_day] < dry_moisture_threshold) :
-		nb_dry_day += 1
-	else :
-		soil_is_dry = false
-print (nb_dry_day)
+# Compute new state
+old_status = state
+reason = ''
 
-# Test if watering should start
-waterOn = "0"
-if (nb_dry_day == dry_max_duration):
-	waterOn = "1"
+if (state == 'AUTO_WATERING_OFF'):
+	# Count number of dry days
+	if (moisture < HUMIDITY_DRY_THRESHOLD) :
+		nbDryPeriod += PERIOD
+	else :
+		nbDryPeriod = 0
+	 # test whether to start watering
+	if (nbDryPeriod > NB_MAX_DRY_PERIOD):
+		# Dry period too long => Watering must start
+		reason = 'Max dry period'
+		state = "AUTO_WATERING_ON"
+		wateringDuration = 0;
+		wateringStepDuration = 0;
+	else :
+		if ((nbDryPeriod > NB_OPT_DRY_PERIOD) and (qpfForecast < QPF_THRESHOLD)):
+			# Dry period is optimal and no (or not enough) rain is forecast => Watering must start
+			reason = 'Optimal dry period and no rain forecast'
+			state = "AUTO_WATERING_ON"
+			wateringDuration = 0;
+			wateringStepDuration = 0;
+
+else: # Watering in progress , handle cyclic ON/PAUSE
+ wateringDuration += PERIOD;
+ wateringStepDuration += PERIOD;
+
+ # Split watering in 15 minutes long phases
+ if ((state == "AUTO_WATERING_ON") and ((wateringDuration)> MAX_WATERING_DURATION)):
+	 reason = 'Max watering duration reached'
+	 state = "AUTO_WATERING_OFF"
+
+ if ((wateringStepDuration)> WATERING_STEP_DURATION):
+
+	 if (state == "AUTO_WATERING_ON"):
+		 reason = 'Pause'
+		 state == "AUTO_WATERING_PAUSE"
+	 else:
+		 if (state == "AUTO_WATERING_PAUSE"):
+			 if (moisture > HUMIDITY_WET_THRESHOLD):
+				 reason = 'Soil is wet enough'
+				 state == "AUTO_WATERING_OFF"
+			 else:
+				 reason = 'Back'
+				 state == "AUTO_WATERING_ON"
+
+if (state == "AUTO_WATERING_ON"):
+	waterOn = '1'
 else:
-	if ((nb_dry_day >= dry_optimal_duration) and (qpf_forecast < qpf_threshold)):
-		waterOn = "1"
-print(waterOn)
+	waterOn = '0'
+
+# debug
+print("state       "+state)
+print("reason      "+reason)
+print("nbDryPeriod "+str(nbDryPeriod))
+
 
 # Set value for Arduino using Bridge
 sys.path.insert(0, '/usr/lib/python2.7/bridge/')

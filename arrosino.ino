@@ -18,6 +18,9 @@ float moist = 0.0;
 float flow  = 0.0; 
 bool waterIsOn = false;
 bool waterWasOn = false;
+bool autoWaterOn = false;
+bool manualWaterOn = false;
+bool manualWaterOff = false;
 
 /* Communication with Atheros*/
 #include <Bridge.h>
@@ -72,13 +75,22 @@ void loop()
     }
     sqlInsertMeasuresInDb(temp, humd, moist, flow);
     sqlUpdateWaterStatusInDb(flow);
+    updateWaterCmd();
   }
   // water ON / OFF
   // Read command from automatic process and manual commands
-  char waterOnValue[1];
-  // read parameter AUTO_WATER_ON from Bridge
-  Bridge.get("WATER_ON", waterOnValue, 1);
-  waterIsOn = (waterOnValue[0] == '1');
+  char data[1];
+  Bridge.get("AUTO_WATER_ON", data, 1);
+  autoWaterOn    = (data[0] == '1');
+  Bridge.get("MANUAL_WATER_ON", data, 1);
+  manualWaterOn  = (data[0] == '1');
+  Bridge.get("MANUAL_WATER_OFF", data, 1);
+  manualWaterOff = (data[0] == '1');
+  
+  waterIsOn = autoWaterOn;
+  if (manualWaterOn) {waterIsOn = true;}
+  if (manualWaterOff) {waterIsOn = false;}
+  
   if (waterIsOn){
     flow = 100.0; // TODO remove
     digitalWrite(ELECTROVALVE, HIGH);
@@ -88,12 +100,14 @@ void loop()
   }
   if (waterIsOn != waterWasOn) {
       sqlUpdateWaterStatusInDb(100.0); // Default flow value only used for watering session time stamp
+      Console.println (waterIsOn);
   }
   waterWasOn = waterIsOn;
-  // end if period
- } // end loop
+  
+ } 
 
- // Store sensor measures in database
+ /* Store sensor measures in database */
+ /*************************************/
  unsigned int sqlInsertMeasuresInDb(float temp, float humd, float moist, float flow){
    Process p;
    String cmd = "python ";
@@ -111,7 +125,8 @@ void loop()
   Console.flush();
  }
 
- // Store watering status in database
+ /* Store watering status in database */
+ /*************************************/
  unsigned int sqlUpdateWaterStatusInDb(float flow){
    Process p;
    String cmd = "python ";
@@ -119,6 +134,25 @@ void loop()
    String scriptArgs = String(flow);
    
    p.runShellCommand(cmd + scriptName + scriptArgs);
+   
+   // Read process output
+   while (p.available()>0) {
+    char c = p.read();
+    Console.print(c);
+  }
+  // Ensure the last bit of data is sent.
+  Console.flush();
+ }
+
+ /* Update watering command           */
+ /*************************************/
+ void updateWaterCmd(){
+   Console.println("updateWaterCmd");
+   Process p;
+   String cmd = "python ";
+   String scriptName ="/mnt/sda1/arduino/www/arrosino/scripts/wateringOnOffTest.py ";
+   
+   p.runShellCommand(cmd + scriptName);
    
    // Read process output
    while (p.available()>0) {
