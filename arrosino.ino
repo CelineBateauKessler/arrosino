@@ -9,7 +9,7 @@ DHT dht(DHT_PIN, DHT_TYPE);
 #define MOISTURE_PIN A1
 
 /* Electrovalve */
-#define ELECTROVALVE 13
+#define ELECTROVALVE 4
 
 /* Variables */
 float humd  = 0.0;
