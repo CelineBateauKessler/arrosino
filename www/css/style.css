@@ -20,12 +20,14 @@ body {
   background-color: #009688;
   color: #FFFFFF;
 }
-.navbar-default .navbar-brand {
+.navbar-arrosino .navbar-brand {
   color: #FFFFFF;
 }
-
-.navbar-toggle .icon-bar {
-  background-color: #FFFFFF;
+.navbar-arrosino .navbar-toggle {
+    border-color: none;
+}
+.navbar-arrosino .navbar-toggle .icon-bar {
+    background-color: #FFFFFF;
 }
 
 #navbar a {color: #B2DFDB;font-weight: bold;}
