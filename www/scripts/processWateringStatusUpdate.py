@@ -43,17 +43,18 @@ if (kind==kindLast):
 	volume   = volumeLast + float(delay)*flow
 else:# new flow value is not valid for previous period
 	volume   = volumeLast*(1+delay/durationLast)
-sqlquery = 'UPDATE watering_session SET date=\"'+dateNowString+'\", duration='+str(duration)+', volume='+str(volume)+' WHERE id='+str(idLast)+';'
+	# change session_id if step is long
+	if (durationLast > 50*70): # TODO use Watering_step_duration
+		sessionId = sessionIdLast + 1
+	else:
+		sessionId = sessionIdLast
+sqlquery = 'UPDATE watering_session SET date=\"'+dateNowString+'\", duration='+str(duration)+', volume='+str(volume)+', session_id='+str(sessionId)+' WHERE id='+str(idLast)+';'
 print(sqlquery)
 c.execute(sqlquery)
 
 # start new session if water just switched to ON or OFF
 if (kind!=kindLast):
 	id = idLast + 1
-	if (delay > 50*70): # TODO use Watering_step_duration
-		sessionId = sessionIdLast + 1
-	else:
-		sessionId = sessionIdLast
 	sqlquery = 'INSERT INTO watering_session (id, session_id, kind, date, duration, volume) VALUES ('+str(id)+','+str(sessionId)+',\"'+kind+'\",\"'+dateNowString+'\", 1, '+str(flow)+');';
 	# set a non null duration to make sure that computation of volume above is correct
 	c.execute(sqlquery)

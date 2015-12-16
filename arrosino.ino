@@ -99,7 +99,7 @@ void loop()
     digitalWrite(ELECTROVALVE, LOW);
   }
   if (waterIsOn != waterWasOn) {
-      sqlUpdateWaterStatusInDb(100.0); // Default flow value only used for watering session time stamp
+      sqlUpdateWaterStatusInDb(flow); // Default flow value only used for watering session time stamp
       Console.println (waterIsOn);
   }
   waterWasOn = waterIsOn;
