@@ -36,6 +36,7 @@ void setup()
   Console.begin(); 
   dht.begin(); 
   pinMode(ELECTROVALVE, OUTPUT);
+  restartLinuxCron();
 }
  
 void loop()
@@ -106,6 +107,13 @@ void loop()
   
  } 
 
+ /* Restart linux cron                */
+ /*************************************/
+ void restartLinuxCron() {
+  Process p;
+  p.runShellCommand("/etc/init.d/cron start");
+ }
+ 
  /* Store sensor measures in database */
  /*************************************/
  unsigned int sqlInsertMeasuresInDb(float temp, float humd, float moist, float flow){
